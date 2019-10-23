@@ -1,0 +1,116 @@
+---
+title: "Exercise 1"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(readr)
+library(janitor)
+library(broom)
+library(magrittr)
+library(kableExtra)
+library(lm.beta)
+library(jtools)
+```
+
+```{r data}
+instability <- read_csv("Instability_PS data.csv")
+```
+
+### (a)
+
+```{r part_a}
+instability %$% 
+  lm(instab ~ democracy) %>% 
+  lm.beta()
+
+## or
+
+instability %>% 
+  mutate(instab = scale(instab),
+         democracy = scale(democracy)) %$% 
+  lm(instab ~ -1 + democracy) %>% 
+  tidy()
+
+## or
+
+instability %$%
+  lm(instab ~ democracy) %>% 
+  summ(scale = TRUE, digits = 3)
+```
+
+### (b)
+
+```{r part_b}
+instability %>% 
+  mutate(instab = scale(instab),
+         democracy = scale(democracy),
+         gdplag = scale(gdplag)) %$% 
+  lm(instab ~ -1 + democracy + gdplag) %>% 
+  tidy()
+```
+
+### (c)
+
+```{r part_C}
+instability %>% 
+  mutate(instab = scale(instab),
+         democracy = scale(democracy),
+         gdplag = scale(log(gdplag))) %$% 
+  lm(instab ~ -1 + democracy + gdplag) %>% 
+  tidy()
+```
+
+### (d)
+
+```{r part_d}
+instability %>% 
+  mutate(instab = scale(instab),
+         democracy = scale(democracy),
+         gdplag = scale(log(gdplag))) %$% 
+  lm(instab ~ -1 + democracy + gdplag + coldwar) %>% 
+  tidy()
+```
+
+### (e)
+
+```{r part_e}
+instability %$% 
+  lm(instab ~ democracy + I(democracy^2) + gdplag + coldwar) %>% 
+  tidy()
+
+beta <- 
+instability %$% 
+  lm(instab ~  democracy + I(democracy^2) + gdplag + coldwar) %>% 
+  tidy() %>% 
+  pull(estimate)
+```
+
+Our model is $\text{instab} = \hat{\beta_1}\text{democracy} + \hat{\beta_2}\text{democracy}^2 + \hat{\beta_3}\text{gdplag} + \hat{\beta_4}\text{coldwar}$, to find the point after which increases in democracy lead to instability find the parital derivitive of instability with respect to democracy and set it equal to 0.
+
+\begin{aligned}
+\frac{\partial\text{ instab}}{\partial\text{ democracy}} &= \hat{\beta_1} + 2\hat{\beta_2}\text{ democracy} = 0\\\\
+2\hat{\beta_2}\text{ democracy} &= -\hat{\beta_1} \\\\
+\text{democracy} &= - \frac{\hat{\beta_1}}{2\hat{\beta_2}} \\\\
+& = `r -beta[2]/(2*beta[3])`
+\end{aligned}
+
+```{r}
+tibble(
+democracy = 1:100,
+instability = beta[2] * (1:100) + beta[3] * (1:100)^2
+) %>% 
+  ggplot(aes(x = democracy, y = instability)) + 
+  geom_line() +  
+  geom_vline(xintercept = -beta[2]/(2*beta[3]), linetype = "dotted") + 
+  labs(x = "Democracy Score", y = "Predicted Instability")
+```
+

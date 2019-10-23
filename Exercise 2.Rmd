@@ -1,0 +1,81 @@
+---
+title: "Exercise 2"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE, tidy=TRUE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(readr)
+library(janitor)
+library(broom)
+library(magrittr)
+library(kableExtra)
+library(car)
+library(moderndive)
+library(lm.beta)
+```
+
+```{r data}
+height_wages <- read_csv("heightwage_british_all_multivariate.csv") %>% 
+  clean_names() %>% 
+  mutate(sex = factor(female, labels = c("male", "female")))
+```
+
+### (a)
+
+```{r part_a}
+height_wages %$% 
+  lm(gwage33 ~ height16 + momed + daded + siblings) %>% 
+  lm.beta()
+```
+
+### (b)
+
+```{r part_b}
+height_wages %$% 
+  lm(gwage33 ~ sex) %>% 
+  tidy()
+
+height_wages %>% 
+  mutate(sex = factor(1 - female, labels = c("male", "female"))) %$% 
+  lm(gwage33 ~ sex) %>% 
+  tidy()
+```
+
+### (c)
+
+```{r part_c}
+height_wages %$% 
+  lm(log(gwage33) ~ sex) %>% 
+  tidy()
+```
+
+### (d)
+
+```{r part_d}
+height_wages %$% 
+  lm(log(gwage33) ~ sex + height33 + height16) %>% 
+  tidy()
+```
+
+### (e)
+
+```{r part_e}
+height_wages %$% 
+  lm(log(gwage33) ~ sex*height16 + siblings) %>% 
+  tidy()
+
+height_wages %$% 
+  lm(log(gwage33) ~ sex*height16) %>% 
+  linearHypothesis("height16 - sexfemale:height16 = 0")
+
+```
+
+

@@ -1,0 +1,94 @@
+---
+title: "Exercise 4"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(janitor)
+library(broom)
+library(magrittr)
+library(kableExtra)
+library(car)
+library(summarytools)
+```
+
+```{r data}
+N <- 1000
+x_1 <- rnorm(N)
+alpha <- 1.0
+gamma_1 <- 1.0
+gamma_2 <- 1.0
+x_2 <- alpha * x_1 + rnorm(N)
+y <- gamma_1 * x_1 + gamma_2 * x_2 + rnorm(N)
+lm(y ~ x_1)
+```
+
+
+```{r}
+post_treatment <- function(N, alpha, gamma_1, gamma_2){
+  x_1 <- rnorm(N)
+  x_2 <- alpha * x_1 + rnorm(N)
+  y <- gamma_1 * x_1 + gamma_2 * x_2 + rnorm(N)
+  lm(y ~ x_1)
+}
+```
+
+```{r}
+post_treatment(1000, 1, 1, 1)
+```
+
+
+### (a)
+
+```{r part_a}
+post_treatment(1000, 1, 0, 1)
+post_treatment(1000, 1, 1, 0)
+
+```
+
+### (b)
+
+```{r part_b}
+
+```
+
+
+### (c)
+
+```{r part_c}
+
+  
+```
+
+### (d)
+
+```{r part_d}
+
+```
+
+### (e)
+
+```{r part_e}
+
+```
+
+### (f)
+
+```{r part_f}
+
+```
+
+### (g)
+
+```{r part_f}
+
+```
+

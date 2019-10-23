@@ -1,0 +1,88 @@
+---
+title: "Exercise 3"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(readr)
+library(janitor)
+library(broom)
+library(magrittr)
+library(kableExtra)
+library(car)
+library(jtools)
+```
+
+```{r data}
+speed <- 
+  read_csv("speeding_tickets_text.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(sex = factor(female, labels = c("male", "female"))) %>% 
+  rename(mph_over = mp_hover) 
+```
+
+### (a)
+
+```{r part_a}
+speed %$% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic) %>% 
+  tidy()
+```
+
+### (b)
+
+```{r part_b}
+beta <- 
+speed %$% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic) %>%
+  tidy() %>% 
+  pull(estimate)
+
+tibble(
+  age = 20:70,
+  amount = beta[1] + beta[2] * age + beta[3] * age^2
+) %>% 
+  ggplot(aes(x = age, y = amount)) + 
+  geom_line()
+```
+
+
+### (c)
+
+```{r part_c}
+tibble(age = c(20, 35, 70),
+  amount = beta[2] + 2 *  beta[3] * age
+) 
+  
+```
+
+### (d)
+
+```{r part_d}
+-beta[2] / (2 * beta[3])
+```
+
+### (e)
+
+```{r part_e}
+speed %$% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic + out_town * state_pol + out_state * state_pol) %>% 
+  summ(digits = 3)
+```
+
+### (f)
+
+```{r part_f}
+speed %$% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic + out_town * state_pol + out_state * state_pol) %>% 
+  linearHypothesis("out_town:state_pol - state_pol:out_state = 0")
+```
+

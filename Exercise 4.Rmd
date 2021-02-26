@@ -1,7 +1,7 @@
 ---
 title: "Exercise 4"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,15 +12,9 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(janitor)
-library(broom)
-library(magrittr)
-library(kableExtra)
-library(car)
-library(summarytools)
 ```
 
-```{r data}
+```{r 4data}
 N <- 1000
 x_1 <- rnorm(N)
 alpha <- 1.0
@@ -32,7 +26,7 @@ lm(y ~ x_1)
 ```
 
 
-```{r}
+```{r 4data-2}
 post_treatment <- function(N, alpha, gamma_1, gamma_2){
   x_1 <- rnorm(N)
   x_2 <- alpha * x_1 + rnorm(N)
@@ -41,14 +35,14 @@ post_treatment <- function(N, alpha, gamma_1, gamma_2){
 }
 ```
 
-```{r}
+```{r 4data-3}
 post_treatment(1000, 1, 1, 1)
 ```
 
 
 ### (a)
 
-```{r part_a}
+```{r 4a}
 post_treatment(1000, 1, 0, 1)
 post_treatment(1000, 1, 1, 0)
 
@@ -56,39 +50,39 @@ post_treatment(1000, 1, 1, 0)
 
 ### (b)
 
-```{r part_b}
+```{r 4b}
 
 ```
 
 
 ### (c)
 
-```{r part_c}
+```{r 4c}
 
   
 ```
 
 ### (d)
 
-```{r part_d}
+```{r 4d}
 
 ```
 
 ### (e)
 
-```{r part_e}
+```{r 4e}
 
 ```
 
 ### (f)
 
-```{r part_f}
+```{r 4f}
 
 ```
 
 ### (g)
 
-```{r part_f}
+```{r 4g}
 
 ```
 

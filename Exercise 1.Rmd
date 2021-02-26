@@ -1,7 +1,7 @@
 ---
 title: "Exercise 1"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,105 +12,100 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(readr)
-library(janitor)
-library(broom)
-library(magrittr)
-library(kableExtra)
-library(lm.beta)
-library(jtools)
 ```
 
-```{r data}
-instability <- read_csv("Instability_PS data.csv")
+```{r 1data}
+instability <- 
+  here::here("data", "Instability_PS data.csv") %>% 
+  read_csv()
 ```
 
 ### (a)
 
-```{r part_a}
-instability %$% 
-  lm(instab ~ democracy) %>% 
-  lm.beta()
+```{r 1a}
+instability %>% 
+  lm(instab ~ democracy, .) %>% 
+  jtools::summ(scale = TRUE, transform.response = TRUE, digits = 4)
 
 ## or
 
 instability %>% 
-  mutate(instab = scale(instab),
-         democracy = scale(democracy)) %$% 
-  lm(instab ~ -1 + democracy) %>% 
-  tidy()
+  mutate(across(everything(), scale)) %>% 
+  lm(instab ~ -1 + democracy, .) %>% 
+  jtools::summ(digits = 4)
 
-## or
 
-instability %$%
-  lm(instab ~ democracy) %>% 
-  summ(scale = TRUE, digits = 3)
 ```
 
 ### (b)
 
-```{r part_b}
-instability %>% 
-  mutate(instab = scale(instab),
-         democracy = scale(democracy),
-         gdplag = scale(gdplag)) %$% 
-  lm(instab ~ -1 + democracy + gdplag) %>% 
-  tidy()
+```{r 1b}
+
+jtools::export_summs(
+  instability %>% 
+  mutate(across(everything(), scale)) %>% 
+  lm(instab ~ -1 + democracy, .),
+  
+  instability %>% 
+  mutate(across(everything(), scale)) %>% 
+  lm(instab ~ -1 + democracy + gdplag, .),
+  
+  digits = 4
+)
+
 ```
 
 ### (c)
 
-```{r part_C}
+```{r 1C}
 instability %>% 
-  mutate(instab = scale(instab),
-         democracy = scale(democracy),
-         gdplag = scale(log(gdplag))) %$% 
-  lm(instab ~ -1 + democracy + gdplag) %>% 
-  tidy()
+  mutate(log_gdplag = log(gdplag),
+         across(everything(), scale)) %>% 
+  lm(instab ~ -1 + democracy + log_gdplag, .) %>% 
+  jtools::summ(digits = 4)
 ```
 
 ### (d)
 
-```{r part_d}
+```{r 1d}
 instability %>% 
-  mutate(instab = scale(instab),
-         democracy = scale(democracy),
-         gdplag = scale(log(gdplag))) %$% 
-  lm(instab ~ -1 + democracy + gdplag + coldwar) %>% 
-  tidy()
+  mutate(log_gdplag = log(gdplag),
+         across(everything(), scale)) %>%
+  lm(instab ~ -1 + democracy + log_gdplag + coldwar, .) %>% 
+  jtools::summ(digits = 4)
 ```
 
 ### (e)
 
 ```{r part_e}
-instability %$% 
-  lm(instab ~ democracy + I(democracy^2) + gdplag + coldwar) %>% 
-  tidy()
+instability %>% 
+  lm(instab ~ democracy + I(democracy^2) + gdplag + coldwar, .) %>% 
+  jtools::summ(digits = 4)
 
 beta <- 
 instability %$% 
   lm(instab ~  democracy + I(democracy^2) + gdplag + coldwar) %>% 
-  tidy() %>% 
+  broom::tidy() %>% 
   pull(estimate)
 ```
 
-Our model is $\text{instab} = \hat{\beta_1}\text{democracy} + \hat{\beta_2}\text{democracy}^2 + \hat{\beta_3}\text{gdplag} + \hat{\beta_4}\text{coldwar}$, to find the point after which increases in democracy lead to instability find the parital derivitive of instability with respect to democracy and set it equal to 0.
-
+Our model is $\text{instab} = \hat{\beta_0} + \hat{\beta_1}\text{democracy} + \hat{\beta_2}\text{democracy}^2 + \hat{\beta_3}\text{gdplag} + \hat{\beta_4}\text{coldwar}$, to find the point after which increases in democracy lead to instability find the partial derivative of instability with respect to democracy and set it equal to 0.
+$$
 \begin{aligned}
 \frac{\partial\text{ instab}}{\partial\text{ democracy}} &= \hat{\beta_1} + 2\hat{\beta_2}\text{ democracy} = 0\\\\
 2\hat{\beta_2}\text{ democracy} &= -\hat{\beta_1} \\\\
 \text{democracy} &= - \frac{\hat{\beta_1}}{2\hat{\beta_2}} \\\\
 & = `r -beta[2]/(2*beta[3])`
 \end{aligned}
+$$
+
 
 ```{r}
-tibble(
-democracy = 1:100,
-instability = beta[2] * (1:100) + beta[3] * (1:100)^2
-) %>% 
-  ggplot(aes(x = democracy, y = instability)) + 
-  geom_line() +  
-  geom_vline(xintercept = -beta[2]/(2*beta[3]), linetype = "dotted") + 
+tibble(democracy = 1:100,
+       instability = beta[2] * (1:100) + beta[3] * (1:100) ^ 2) %>%
+  ggplot(aes(x = democracy, y = instability)) +
+  geom_line() +
+  geom_vline(xintercept = -beta[2] / (2 * beta[3]), linetype = "dotted") +
   labs(x = "Democracy Score", y = "Predicted Instability")
 ```
 

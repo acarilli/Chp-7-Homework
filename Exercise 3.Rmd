@@ -1,7 +1,7 @@
 ---
 title: "Exercise 3"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,18 +12,12 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(readr)
-library(janitor)
-library(broom)
-library(magrittr)
-library(kableExtra)
-library(car)
-library(jtools)
 ```
 
-```{r data}
+```{r 3data}
 speed <- 
-  read_csv("speeding_tickets_text.csv") %>% 
+  here::here("data", "speeding_tickets_text.csv") %>% 
+  read_csv() %>% 
   janitor::clean_names() %>% 
   mutate(sex = factor(female, labels = c("male", "female"))) %>% 
   rename(mph_over = mp_hover) 
@@ -31,19 +25,19 @@ speed <-
 
 ### (a)
 
-```{r part_a}
-speed %$% 
-  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic) %>% 
-  tidy()
+```{r 3a}
+speed %>% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic, .) %>% 
+  jtools::summ(digits = 4)
 ```
 
 ### (b)
 
-```{r part_b}
+```{r 3b}
 beta <- 
-speed %$% 
-  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic) %>%
-  tidy() %>% 
+speed %>% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic, .) %>%
+  broom::tidy() %>% 
   pull(estimate)
 
 tibble(
@@ -57,7 +51,7 @@ tibble(
 
 ### (c)
 
-```{r part_c}
+```{r 3c}
 tibble(age = c(20, 35, 70),
   amount = beta[2] + 2 *  beta[3] * age
 ) 
@@ -66,23 +60,25 @@ tibble(age = c(20, 35, 70),
 
 ### (d)
 
-```{r part_d}
+```{r 3d}
 -beta[2] / (2 * beta[3])
 ```
 
 ### (e)
 
-```{r part_e}
-speed %$% 
-  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic + out_town * state_pol + out_state * state_pol) %>% 
-  summ(digits = 3)
+```{r 3e}
+speed %>% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic + 
+       out_town * state_pol + out_state * state_pol, .) %>% 
+  jtools::summ(digits = 3)
 ```
 
 ### (f)
 
-```{r part_f}
-speed %$% 
-  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic + out_town * state_pol + out_state * state_pol) %>% 
-  linearHypothesis("out_town:state_pol - state_pol:out_state = 0")
+```{r 3f}
+speed %>% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic +
+       out_town * state_pol + out_state * state_pol, .) %>% 
+  car::linearHypothesis("out_town:state_pol - state_pol:out_state = 0")
 ```
 

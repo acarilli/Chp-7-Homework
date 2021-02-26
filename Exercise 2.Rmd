@@ -1,7 +1,7 @@
 ---
 title: "Exercise 2"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,69 +12,66 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(readr)
-library(janitor)
-library(broom)
-library(magrittr)
-library(kableExtra)
-library(car)
-library(moderndive)
-library(lm.beta)
 ```
 
-```{r data}
-height_wages <- read_csv("heightwage_british_all_multivariate.csv") %>% 
-  clean_names() %>% 
+```{r 2data}
+height_wages <- 
+  here::here("data", "heightwage_british_all_multivariate.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
   mutate(sex = factor(female, labels = c("male", "female")))
 ```
 
 ### (a)
 
-```{r part_a}
-height_wages %$% 
-  lm(gwage33 ~ height16 + momed + daded + siblings) %>% 
-  lm.beta()
+```{r 2a}
+height_wages %>% 
+  mutate(across(where(is.numeric), scale)) %>% 
+  lm(gwage33 ~ height16 + momed + daded + siblings, .) %>% 
+  jtools::summ(digits = 4)
 ```
 
 ### (b)
 
-```{r part_b}
-height_wages %$% 
-  lm(gwage33 ~ sex) %>% 
-  tidy()
-
-height_wages %>% 
-  mutate(sex = factor(1 - female, labels = c("male", "female"))) %$% 
-  lm(gwage33 ~ sex) %>% 
-  tidy()
+```{r 2b}
+jtools::export_summs(
+  height_wages %>% 
+  lm(gwage33 ~ sex, .),
+  
+  height_wages %>% 
+  mutate(sex = factor(1 - female, labels = c("male", "female"))) %>% 
+  lm(gwage33 ~ sex, .),
+  digits = 4
+)
 ```
 
 ### (c)
 
-```{r part_c}
-height_wages %$% 
-  lm(log(gwage33) ~ sex) %>% 
-  tidy()
+
+```{r 2c}
+height_wages %>% 
+  lm(log(gwage33) ~ sex, .) %>% 
+  jtools::summ(digits = 4)
 ```
 
 ### (d)
 
-```{r part_d}
-height_wages %$% 
-  lm(log(gwage33) ~ sex + height33 + height16) %>% 
-  tidy()
+```{r 2d}
+height_wages %>% 
+  lm(log(gwage33) ~ sex + height33 + height16, .) %>% 
+  jtools::summ(digits = 4)
 ```
 
 ### (e)
 
-```{r part_e}
-height_wages %$% 
-  lm(log(gwage33) ~ sex*height16 + siblings) %>% 
-  tidy()
+```{r 2e}
+height_wages %>% 
+  lm(log(gwage33) ~ sex*height16 + siblings, .) %>% 
+  jtools::summ(digits = 4)
 
-height_wages %$% 
-  lm(log(gwage33) ~ sex*height16) %>% 
-  linearHypothesis("height16 - sexfemale:height16 = 0")
+height_wages %>% 
+  lm(log(gwage33) ~ sex*height16, .) %>% 
+  car::linearHypothesis("height16 - sexfemale:height16 = 0")
 
 ```
 

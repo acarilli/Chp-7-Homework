@@ -33,6 +33,13 @@ post_treatment <- function(N, alpha, gamma_1, gamma_2){
   y <- gamma_1 * x_1 + gamma_2 * x_2 + rnorm(N)
   lm(y ~ x_1)
 }
+
+post_treatment_2 <- function(N, alpha, gamma_1, gamma_2){
+  x_1 <- rnorm(N)
+  x_2 <- alpha * x_1 + rnorm(N)
+  y <- gamma_1 * x_1 + gamma_2 * x_2 + rnorm(N)
+  lm(y ~ x_1 + x_2)
+}
 ```
 
 ```{r 4data-3}
@@ -51,7 +58,13 @@ post_treatment(1000, 1, 1, 0)
 ### (b)
 
 ```{r 4b}
-
+set.seed(123)
+jtools::export_summs(
+post_treatment_2(1000, 0, 0, 0),
+post_treatment_2(1000, 1, 0, 1),
+post_treatment_2(1000, 1, 1, 0),
+post_treatment_2(1000, 1, 0, 0)
+)
 ```
 
 

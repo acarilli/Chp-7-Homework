@@ -1,0 +1,258 @@
+---
+title: "Chapter 7 Homework"
+author: "Carilli"
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
+output: 
+  html_document:
+    toc: false
+    toc_float: false
+    df_print: paged
+    theme: cerulean
+    highlight: tango
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+```
+
+# Exercise {.tabset}
+
+## 1 {.tabset}
+
+```{r 1data}
+instability <- 
+  here::here("data", "Instability_PS data.csv") %>% 
+  read_csv()
+```
+
+### (a)
+
+```{r 1a}
+instability %>% 
+  lm(instab ~ democracy, .) %>% 
+  jtools::summ(scale = TRUE, transform.response = TRUE, digits = 4)
+
+## or
+
+instability %>% 
+  mutate(across(everything(), scale)) %>% 
+  lm(instab ~ -1 + democracy, .) %>% 
+  jtools::summ(digits = 4)
+
+
+```
+
+### (b)
+
+```{r 1b}
+
+jtools::export_summs(
+  instability %>% 
+  mutate(across(everything(), scale)) %>% 
+  lm(instab ~ -1 + democracy, .),
+  
+  instability %>% 
+  mutate(across(everything(), scale)) %>% 
+  lm(instab ~ -1 + democracy + gdplag, .),
+  
+  digits = 4
+)
+
+```
+
+### (c)
+
+```{r 1C}
+instability %>% 
+  mutate(log_gdplag = log(gdplag),
+         across(everything(), scale)) %>% 
+  lm(instab ~ -1 + democracy + log_gdplag, .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (d)
+
+```{r 1d}
+instability %>% 
+  mutate(log_gdplag = log(gdplag),
+         across(everything(), scale)) %>%
+  lm(instab ~ -1 + democracy + log_gdplag + coldwar, .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (e)
+
+```{r part_e}
+instability %>% 
+  lm(instab ~ democracy + I(democracy^2) + gdplag + coldwar, .) %>% 
+  jtools::summ(digits = 4)
+
+beta <- 
+instability %$% 
+  lm(instab ~  democracy + I(democracy^2) + gdplag + coldwar) %>% 
+  broom::tidy() %>% 
+  pull(estimate)
+```
+
+Our model is $\text{instab} = \hat{\beta_0} + \hat{\beta_1}\text{democracy} + \hat{\beta_2}\text{democracy}^2 + \hat{\beta_3}\text{gdplag} + \hat{\beta_4}\text{coldwar}$, to find the point after which increases in democracy lead to instability find the partial derivative of instability with respect to democracy and set it equal to 0.
+$$
+\begin{aligned}
+\frac{\partial\text{ instab}}{\partial\text{ democracy}} &= \hat{\beta_1} + 2\hat{\beta_2}\text{ democracy} = 0\\\\
+2\hat{\beta_2}\text{ democracy} &= -\hat{\beta_1} \\\\
+\text{democracy} &= - \frac{\hat{\beta_1}}{2\hat{\beta_2}} \\\\
+& = `r -beta[2]/(2*beta[3])`
+\end{aligned}
+$$
+
+
+```{r}
+tibble(
+democracy = 1:100,
+instability = beta[2] * (1:100) + beta[3] * (1:100)^2
+) %>% 
+  ggplot(aes(x = democracy, y = instability)) + 
+  geom_line() +  
+  geom_vline(xintercept = -beta[2]/(2*beta[3]), linetype = "dotted") + 
+  labs(x = "Democracy Score", y = "Predicted Instability")
+```
+
+
+
+## 2 {.tabset}
+
+```{r 2data}
+height_wages <- 
+  here::here("data", "heightwage_british_all_multivariate.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(sex = factor(female, labels = c("male", "female")))
+```
+
+### (a)
+
+```{r 2a}
+height_wages %>% 
+  mutate(across(where(is.numeric), scale)) %>% 
+  lm(gwage33 ~ height16 + momed + daded + siblings, .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (b)
+
+```{r 2b}
+jtools::export_summs(
+  height_wages %>% 
+  lm(gwage33 ~ sex, .),
+  
+  height_wages %>% 
+  mutate(sex = factor(1 - female, labels = c("male", "female"))) %>% 
+  lm(gwage33 ~ sex, .),
+  digits = 4
+)
+```
+
+### (c)
+
+
+```{r 2c}
+height_wages %>% 
+  lm(log(gwage33) ~ sex, .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (d)
+
+```{r 2d}
+height_wages %>% 
+  lm(log(gwage33) ~ sex + height33 + height16, .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (e)
+
+```{r 2e}
+height_wages %>% 
+  lm(log(gwage33) ~ sex*height16 + siblings, .) %>% 
+  jtools::summ(digits = 4)
+
+height_wages %>% 
+  lm(log(gwage33) ~ sex*height16, .) %>% 
+  car::linearHypothesis("height16 - sexfemale:height16 = 0")
+
+```
+
+
+
+## 3 {.tabset}
+
+```{r 3data}
+speed <- 
+  here::here("daata", "speeding_tickets_text.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(sex = factor(female, labels = c("male", "female"))) %>% 
+  rename(mph_over = mp_hover) 
+```
+
+### (a)
+
+```{r 3a}
+speed %>% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic, .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (b)
+
+```{r 3b}
+beta <- 
+speed %>% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic, .) %>%
+  broom::tidy() %>% 
+  pull(estimate)
+
+tibble(
+  age = 20:70,
+  amount = beta[1] + beta[2] * age + beta[3] * age^2
+) %>% 
+  ggplot(aes(x = age, y = amount)) + 
+  geom_line()
+```
+
+
+### (c)
+
+```{r 3c}
+tibble(age = c(20, 35, 70),
+  amount = beta[2] + 2 *  beta[3] * age
+) 
+  
+```
+
+### (d)
+
+```{r 3d}
+-beta[2] / (2 * beta[3])
+```
+
+### (e)
+
+```{r 3e}
+speed %>% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic + 
+       out_town * state_pol + out_state * state_pol, .) %>% 
+  jtools::summ(digits = 3)
+```
+
+### (f)
+
+```{r 3f}
+speed %>% 
+  lm(amount ~ age + I(age^2) + mph_over + sex + black + hispanic +
+       out_town * state_pol + out_state * state_pol, .) %>% 
+  car::linearHypothesis("out_town:state_pol - state_pol:out_state = 0")
+```
+
